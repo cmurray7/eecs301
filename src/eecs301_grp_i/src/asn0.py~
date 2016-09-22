@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import roslib
 import rospy
 from fw_wrapper.srv import *
@@ -36,7 +37,7 @@ def setMotorMode(motor_id, target_val):
     rospy.wait_for_service('allcmd')
     try:
         send_command = rospy.ServiceProxy('allcmd', allcmd)
-    resp1 = send_command('SetMotorMode', motor_id, target_val, 0, [0], [0])
+        resp1 = send_command('SetMotorMode', motor_id, target_val, 0, [0], [0])
         return resp1.val
     except rospy.ServiceException, e:
         print "Service call failed: %s"%e
@@ -118,16 +119,42 @@ if __name__ == "__main__":
 
     # control loop running at 10hz
     r = rospy.Rate(10) # 10hz
+    
+    # motor position check 
+    for i in range(1,9):
+        motor_check_byid = i
+        motor_position = getMotorPositionCommand(motor_check_byid)
+        rospy.loginfo("Motor position of motor %d: %f", motor_check_byid, motor_position)
+        
+    # set motor position
+    motor_id = 1
+    target_val = 512
+    #response = setMotorTargetPositionCommand(motor_id, target_val)
+    
+    # return to neutral
+    pos_list = [510,512,493,510,687,320,516,512]
+    for i, pos in enumerate(pos_list):
+        setMotorTargetPositionCommand(i+1, pos)
+        
     while not rospy.is_shutdown():
         # call function to get sensor value
-        port = 5
+        port = 1
         sensor_reading = getSensorValue(port)
-        rospy.loginfo("Sensor value at port %d: %f", 5, sensor_reading)
-
-        # call function to set motor position
-        motor_id = 1
-        target_val = 450
-        # response = setMotorTargetPositionCommand(motor_id, target_val)
+        rospy.loginfo("Sensor value at port %d: %f", port, sensor_reading)
+        
+        # BEHAVIOR: Point at Enemy
+        if sensor_reading > 0.0:
+            setMotorTargetPositionCommand(5, 1023)
+            setMotorTargetPositionCommand(6, 199)
+            setMotorTargetPositionCommand(7, 0)
+            setMotorTargetPositionCommand(8, 511)
+        if sensor_reading == 0.0:
+            pos_list = [510,512,493,510,687,320,516,512]
+            for i, pos in enumerate(pos_list):
+                setMotorTargetPositionCommand(i+1, pos)
 
         # sleep to enforce loop rate
         r.sleep()
+        
+        
+        
