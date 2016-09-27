@@ -3,6 +3,7 @@
 import roslib
 import rospy
 from fw_wrapper.srv import *
+import time
 
 # -----------SERVICE DEFINITION-----------
 # allcmd REQUEST DATA
@@ -126,35 +127,65 @@ if __name__ == "__main__":
         motor_position = getMotorPositionCommand(motor_check_byid)
         rospy.loginfo("Motor position of motor %d: %f", motor_check_byid, motor_position)
         
-    # set motor position
-    motor_id = 1
-    target_val = 512
-    #response = setMotorTargetPositionCommand(motor_id, target_val)
-    
     # return to neutral
     pos_list = [510,512,493,510,687,320,516,512]
     for i, pos in enumerate(pos_list):
         setMotorTargetPositionCommand(i+1, pos)
-        
+    time.sleep(1)
+   
     while not rospy.is_shutdown():
         # call function to get sensor value
         port = 1
         sensor_reading = getSensorValue(port)
         rospy.loginfo("Sensor value at port %d: %f", port, sensor_reading)
         
-        # BEHAVIOR: Point at Enemy
-        if sensor_reading > 0.0:
-            setMotorTargetPositionCommand(5, 1023)
-            setMotorTargetPositionCommand(6, 199)
-            setMotorTargetPositionCommand(7, 0)
-            setMotorTargetPositionCommand(8, 511)
-        if sensor_reading == 0.0:
+        # When foreign object is slightly close to bot's sensor
+        if sensor_reading > 0 and sensor_reading < 200:
+            # return to neutral
             pos_list = [510,512,493,510,687,320,516,512]
             for i, pos in enumerate(pos_list):
                 setMotorTargetPositionCommand(i+1, pos)
-
-        # sleep to enforce loop rate
+        # When foreign object is very close to bot's sensor
+        elif sensor_reading >= 200:
+            #Point
+            setMotorTargetPositionCommand(5, 1023)
+            setMotorTargetPositionCommand(6, 199)
+            setMotorTargetPositionCommand(7, 470)
+            setMotorTargetPositionCommand(8, 511)
+        #When no object detected
+        else:
+            # Dance
+            
+            # Right Elbow
+            if getMotorPositionCommand(7) <= 530:
+                setMotorTargetPositionCommand(7, 800)
+            if getMotorPositionCommand(7) >= 795:
+                setMotorTargetPositionCommand(7, 512)
+            
+            # Left Elbow
+            if getMotorPositionCommand(8) <= 235:
+                setMotorTargetPositionCommand(8, 512)    
+            if getMotorPositionCommand(8) >= 490:
+                setMotorTargetPositionCommand(8, 220)
+            
+            # Right hip
+            if getMotorPositionCommand(1) <= 515:
+                setMotorTargetPositionCommand(1, 550)    
+            if getMotorPositionCommand(1) >= 545: 
+                setMotorTargetPositionCommand(1, 510)
+            
+            # Left hip    
+            if getMotorPositionCommand(2) <= 475:
+                setMotorTargetPositionCommand(2, 510)    
+            if getMotorPositionCommand(2) >= 505: 
+                setMotorTargetPositionCommand(2, 470)                
+            
+            
+        # Sleep to enforce loop rate
         r.sleep()
+        
+        
+        
         
         
         
