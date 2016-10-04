@@ -114,95 +114,170 @@ def getIsMotorMovingCommand(motor_id):
     except rospy.ServiceException, e:
         print "Service call failed: %s"%e
 
+def returnToNeutral():
+    pos_list = [510,510,510,510,772,250,512,512]
+    for i, pos in enumerate(pos_list):
+        setMotorTargetPositionCommand(i+1, pos)
+    time.sleep(1)
+
+def turnLeft():
+    setMotorTargetPositionCommand(4, 320)   
+    setMotorTargetPositionCommand(3, 420)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(1, 650)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(3, 510)
+    setMotorTargetPositionCommand(4, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(1, 510)
+    time.sleep(0.2)
+    
+    setMotorTargetPositionCommand(4, 320)   
+    setMotorTargetPositionCommand(3, 420)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(1, 650)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(3, 510)
+    setMotorTargetPositionCommand(4, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(1, 510)
+    time.sleep(0.2)
+    
+    setMotorTargetPositionCommand(4, 320)   
+    setMotorTargetPositionCommand(3, 420)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(1, 650)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(3, 510)
+    setMotorTargetPositionCommand(4, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(1, 510)
+    time.sleep(0.2)
+
+def turnRight():
+    setMotorTargetPositionCommand(3, 700)   
+    setMotorTargetPositionCommand(4, 600)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(2, 350)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(4, 510)
+    setMotorTargetPositionCommand(3, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(2, 510)
+    time.sleep(0.2)
+    
+    setMotorTargetPositionCommand(3, 700)   
+    setMotorTargetPositionCommand(4, 600)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(2, 350)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(4, 510)
+    setMotorTargetPositionCommand(3, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(2, 510)
+    time.sleep(0.2)
+    
+    setMotorTargetPositionCommand(3, 700)   
+    setMotorTargetPositionCommand(4, 600)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(2, 350)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(4, 510)
+    setMotorTargetPositionCommand(3, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(2, 510)
+    time.sleep(0.2)
+
+def turnAround():
+    turnLeft()
+    turnLeft()
+
 # Main function
 if __name__ == "__main__":
     rospy.init_node('example_node', anonymous=True)
     rospy.loginfo("Starting Group X Control Node...")
 
     # control loop running at 10hz
-    r = rospy.Rate(1)# 10hz
-        
-    # return to neutral
-    pos_list = [510,510,510,510,772,250,512,512]
-    for i, pos in enumerate(pos_list):
-        setMotorTargetPositionCommand(i+1, pos)
-    time.sleep(1)
-    
+    r = rospy.Rate(20)# 10hz
+
+    returnToNeutral()
+
     # motor position check 
     for i in range(1,9):
         motor_check_byid = i
         motor_position = getMotorPositionCommand(motor_check_byid)
         rospy.loginfo("Motor position of motor %d: %f", motor_check_byid, motor_position)
-        setMotorWheelSpeed(motor_check_byid, 200)
-  
-    '''
-    # Right turn
-    setMotorTargetPositionCommand(3, 680)
-    time.sleep(0.1)
-    setMotorTargetPositionCommand(4, 610)
-    time.sleep(0.1)
-    setMotorTargetPositionCommand(1, 810)
-    setMotorTargetPositionCommand(3, 510)
-    time.sleep(0.1)
-    setMotorTargetPositionCommand(2, 380)
-    setMotorTargetPositionCommand(4, 550)
-    time.sleep(0.2)
- #   setMotorTargetPositionCommand(3, 530)
-    '''
+        setMotorWheelSpeed(motor_check_byid, 200)    
     
-    setMotorTargetPositionCommand(4, 370)
-    setMotorTargetPositionCommand(3, 420)
-    time.sleep(0)
-    setMotorTargetPositionCommand(1, 400)
-    setMotorTargetPositionCommand(2, 400)
-    time.sleep(1)
-    setMotorTargetPositionCommand(1, 650)
-    time.sleep(2)
-    setMotorTargetPositionCommand(3, 510)
-    setMotorTargetPositionCommand(4, 510)
-    setMotorTargetPositionCommand(1, 510)
-    setMotorTargetPositionCommand(2, 510)
+    '''
+    #turn left
+    turnLeft()
 
-
-
-  
-    '''  
+    #turn right
+    turnRight()
+    
+    #turn around
+    turnAround()
+    '''
+      
     while not rospy.is_shutdown():
 
         # call function to get sensor value
-        port = 1
-        sensor_reading = getSensorValue(port)
-        rospy.loginfo("Sensor value at port %d: %f", port, sensor_reading)       
+        sensor_reading_left = getSensorValue(1)
+        sensor_reading_front = getSensorValue(3)
+        sensor_reading_right = getSensorValue(5)
+        rospy.loginfo("Front port: %f    Left Port: %f    Right Port: %f", \
+                sensor_reading_front, sensor_reading_left, sensor_reading_right)        
 
+        # Walking action (one pace)
         # Right-step
         setMotorTargetPositionCommand(4, 370)
         setMotorTargetPositionCommand(3, 420)
-        time.sleep(0)
+        time.sleep(0.2)
         setMotorTargetPositionCommand(1, 400)
         setMotorTargetPositionCommand(2, 400)
-        time.sleep(0)
+        time.sleep(0.2)
         setMotorTargetPositionCommand(3, 510)
         setMotorTargetPositionCommand(4, 510)
         setMotorTargetPositionCommand(1, 510)
         setMotorTargetPositionCommand(2, 510)
-        time.sleep(0)
+        time.sleep(0.2)
         # Left-step      
         setMotorTargetPositionCommand(3, 650)
         setMotorTargetPositionCommand(4, 600)  
-        time.sleep(0) 
+        time.sleep(0.2) 
         setMotorTargetPositionCommand(2, 620)
         setMotorTargetPositionCommand(1, 620)
-        time.sleep(0)
+        time.sleep(0.2)
         setMotorTargetPositionCommand(4, 510)
         setMotorTargetPositionCommand(3, 510)
         setMotorTargetPositionCommand(2, 510)
         setMotorTargetPositionCommand(1, 510)
-        time.sleep(0)
-           
+        time.sleep(0.2)
+        
+        # Reactive control (obstacle detection and turning away)
+        if (sensor_reading_left > 40) and \
+           (sensor_reading_right > 40) and \
+           (sensor_reading_front > 1300):
+            print 'FULLY BLOCKED'
+            turnAround()
+            continue
+        if (sensor_reading_right > 40) and (sensor_reading_front > 1300):
+            print 'BLOCKED RIGHT'
+            turnLeft()
+            continue
+        if (sensor_reading_left > 40) and (sensor_reading_front > 1300):
+            print 'BLOCKED LEFT'
+            turnRight()
+            continue
+        if (sensor_reading_front > 1700):
+            print 'BLOCKED FRONT'
+            turnAround()
+            continue                
             
         # Sleep to enforce loop rate
         r.sleep()
-     '''
+     
         
         
         
