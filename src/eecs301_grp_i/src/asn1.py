@@ -120,6 +120,32 @@ def returnToNeutral():
         setMotorTargetPositionCommand(i+1, pos)
     time.sleep(1)
 
+def leftStep():
+    setMotorTargetPositionCommand(4, 370)
+    setMotorTargetPositionCommand(3, 420)
+    time.sleep(0)
+    setMotorTargetPositionCommand(1, 400)
+    setMotorTargetPositionCommand(2, 400)
+    time.sleep(0)     
+    setMotorTargetPositionCommand(3, 510)
+    setMotorTargetPositionCommand(4, 510)
+    setMotorTargetPositionCommand(1, 510)
+    setMotorTargetPositionCommand(2, 510)
+    time.sleep(0.05)
+    
+def rightStep():
+    setMotorTargetPositionCommand(3, 650)
+    setMotorTargetPositionCommand(4, 600)  
+    time.sleep(0) 
+    setMotorTargetPositionCommand(2, 620)
+    setMotorTargetPositionCommand(1, 620)
+    time.sleep(0)
+    setMotorTargetPositionCommand(4, 510)
+    setMotorTargetPositionCommand(3, 510)
+    setMotorTargetPositionCommand(2, 510)
+    setMotorTargetPositionCommand(1, 510)
+    time.sleep(0)
+
 def turnLeft():
     setMotorTargetPositionCommand(4, 320)   
     setMotorTargetPositionCommand(3, 420)  
@@ -191,6 +217,31 @@ def turnRight():
 def turnAround():
     turnLeft()
     turnLeft()
+    
+def slightLeftTurn(raw_err):
+    
+    setMotorTargetPositionCommand(4, 320)   
+    setMotorTargetPositionCommand(3, 420)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(1, 560)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(3, 510)
+    setMotorTargetPositionCommand(4, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(1, 510)
+    time.sleep(0.1)
+    
+def slightRightTurn(raw_err):
+    setMotorTargetPositionCommand(3, 700)   
+    setMotorTargetPositionCommand(4, 600)  
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(2, 460)
+    time.sleep(0.5)
+    setMotorTargetPositionCommand(4, 510)
+    setMotorTargetPositionCommand(3, 510)
+    time.sleep(0.2)
+    setMotorTargetPositionCommand(2, 510)
+    time.sleep(0.1)
 
 # Main function
 if __name__ == "__main__":
@@ -198,7 +249,7 @@ if __name__ == "__main__":
     rospy.loginfo("Starting Group X Control Node...")
 
     # control loop running at 10hz
-    r = rospy.Rate(20)# 10hz
+    r = rospy.Rate(10)# 10hz
 
     returnToNeutral()
 
@@ -209,17 +260,8 @@ if __name__ == "__main__":
         rospy.loginfo("Motor position of motor %d: %f", motor_check_byid, motor_position)
         setMotorWheelSpeed(motor_check_byid, 200)    
     
-    '''
-    #turn left
-    turnLeft()
-
-    #turn right
-    turnRight()
     
-    #turn around
-    turnAround()
-    '''
-      
+    #right_sensor_log = []  
     while not rospy.is_shutdown():
 
         # call function to get sensor value
@@ -227,33 +269,15 @@ if __name__ == "__main__":
         sensor_reading_front = getSensorValue(3)
         sensor_reading_right = getSensorValue(5)
         rospy.loginfo("Front port: %f    Left Port: %f    Right Port: %f", \
-                sensor_reading_front, sensor_reading_left, sensor_reading_right)        
-
+                sensor_reading_front, sensor_reading_left, sensor_reading_right)         
+        
+        '''
+        right_sensor_log.append(sensor_reading_right)
+        print "Right sensor mean at x cm: ", sum(right_sensor_log)/len(right_sensor_log)
+        '''
         # Walking action (one pace)
-        # Right-step
-        setMotorTargetPositionCommand(4, 370)
-        setMotorTargetPositionCommand(3, 420)
-        time.sleep(0.2)
-        setMotorTargetPositionCommand(1, 400)
-        setMotorTargetPositionCommand(2, 400)
-        time.sleep(0.2)
-        setMotorTargetPositionCommand(3, 510)
-        setMotorTargetPositionCommand(4, 510)
-        setMotorTargetPositionCommand(1, 510)
-        setMotorTargetPositionCommand(2, 510)
-        time.sleep(0.2)
-        # Left-step      
-        setMotorTargetPositionCommand(3, 650)
-        setMotorTargetPositionCommand(4, 600)  
-        time.sleep(0.2) 
-        setMotorTargetPositionCommand(2, 620)
-        setMotorTargetPositionCommand(1, 620)
-        time.sleep(0.2)
-        setMotorTargetPositionCommand(4, 510)
-        setMotorTargetPositionCommand(3, 510)
-        setMotorTargetPositionCommand(2, 510)
-        setMotorTargetPositionCommand(1, 510)
-        time.sleep(0.2)
+        leftStep()
+        rightStep()
         
         # Reactive control (obstacle detection and turning away)
         if (sensor_reading_left > 40) and \
@@ -273,11 +297,16 @@ if __name__ == "__main__":
         if (sensor_reading_front > 1700):
             print 'BLOCKED FRONT'
             turnAround()
-            continue                
+            continue     
+          
+        # Feedback control for wall following on the right
+        if (sensor_reading_right > 355):
+            slightLeftTurn(sensor_reading_right)
+        if (sensor_reading_right < 268):
+            slightRightTurn(sensor_reading_right) 
+         
             
         # Sleep to enforce loop rate
         r.sleep()
-     
-        
-        
-        
+      
+         
