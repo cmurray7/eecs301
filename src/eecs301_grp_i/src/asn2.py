@@ -317,33 +317,90 @@ def genComms(path, start_pos, start_head, goal_head):
 # 
 #build map - start at (0,0), facing south
 def buildMap():
-    # check N, W, E, S
-    # set detected obstacles
-    # move to unobstructed cell
-               
-def checkAndSetCell(model_map, pos, head):
+    model_map = EECSMap()
+    model_map.clearObstacleMap()
     
+    curr_pos = (0,0)
+    curr_head = 'S'
+    avail_dirs = setWalls(model_map, curr_pos, curr_head)
+    count_visited = 0
+    
+    while len(avail_dirs) != 0:
+        
+        if 'left' in avail_dirs:
+            curr_head = leftTurn(curr_head)
+            curr_pos = move(1, curr_head, curr_pos)
+        elif 'front' in avail_dirs:
+            curr_pos = move(1, curr_head, curr_pos)
+        elif 'right' in avail_dirs:
+            curr_head = rightTurn(curr_head)
+            curr_pos = move(1, curr_head, curr_pos)
+        else:
+            curr_head = leftTurn(curr_head)
+            curr_head = leftTurn(curr_head)
+            curr_pos = move(1, curr_head, curr_pos)
+            
+        avail_dirs = setWalls(model_map, curr_pos, curr_head)
+               
+def setWalls(model_map, pos, head):
+
     dirs = ['N', 'E', 'S', 'W']
     head_int = dirs.index(head) + 1
     
     reading_front = getSensorValue(3)
+    print 'reading front: ', reading_front
     reading_left = getSensorValue(1)
+    print 'reading left: ', reading_left
     reading_right = getSensorValue(6)
-    
-    temp_head = turnLeft(head)
+    print 'reading right: ', reading_right
+    '''
+    temp_head = leftTurn(head)
+    time.sleep(2)
     reading_back = getSensorValue(1)
-    turnRight(temp_head)
-    
-    if reading_front > 500:
+    print 'reading back: ', reading_back
+    rightTurn(temp_head)
+    '''
+    avail_dirs = ['back']
+    if reading_front > 800:
         model_map.setObstacle(pos[0], pos[1], 1, head_int)
-    if reading_left > 500:
-        model_map.setObstacle(pos[0], pos[1], 1, (head_int + 3) % 4)
-    if reading_right > 500:
-        model_map.setObstacle(pos[0], pos[1], 1, (head_int + 1) % 4)
-    if reading_right > 500:
-        model_map.setObstacle(pos[0], pos[1], 1, (head_int + 2) % 4)
+    else:
+        avail_dirs.append('front')
         
-         
+    if reading_left > 40:
+        direction = (head_int + 3) % 4
+        if direction == 0:
+            direction = 4
+        model_map.setObstacle(pos[0], pos[1], 1, direction)
+    else:
+        avail_dirs.append('left')
+        
+    if reading_right > 100:
+        direction = (head_int + 1) % 4
+        if direction == 0:
+            direction = 4 
+        model_map.setObstacle(pos[0], pos[1], 1, direction)
+    else:
+        avail_dirs.append('right')
+        
+    '''
+    if reading_back > 200:
+        direction = (head_int + 2) % 4
+        if direction == 0:
+            direction = 4  
+        model_map.setObstacle(pos[0], pos[1], 1, direction)
+    ''' 
+    model_map.printObstacleMap()
+    return avail_dirs   
+
+def neighborPosition(pos, direction):
+    if direction == 1:
+        return (pos[0]-1, pos[1])
+    if direction == 2:
+        return (pos[0], pos[1] + 1)
+    if direction == 3:
+        return (pos[0]+1, pos[1])
+    if direction == 4:
+        return (pos[0], pos[1] -1)
     
 # Main function
 if __name__ == "__main__":
@@ -372,8 +429,9 @@ if __name__ == "__main__":
     
     setMotorMode(5, 1)
     setMotorMode(6, 1)
-
     
+    buildMap()
+    '''
     # control loop running at 10hz
     r = rospy.Rate(10)# 10hz
     
@@ -390,7 +448,7 @@ if __name__ == "__main__":
         r.sleep()
    
     
-
+    '''
 
 
 
